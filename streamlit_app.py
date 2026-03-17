@@ -1,10 +1,10 @@
 import streamlit as st
 import pandas as pd
-import seaborn as sns
+
 import matplotlib.pyplot as plt
 import kagglehub
 import os
-
+import seaborn as sns
 # Configuración de la página
 st.set_page_config(page_title="Energy & Climate Analysis", layout="wide")
 sns.set_theme(style="whitegrid") # Estilo profesional
