@@ -12,7 +12,7 @@ plt.rcParams['figure.facecolor'] = '#f0f2f6'
 @st.cache_data
 def load_local_data():
     # CAMBIA 'tu_archivo.csv' por el nombre real del archivo que subas a GitHub
-    df = pd.read_csv('climate_and_energy_data.csv') 
+    df = pd.read_csv('global_climate_energy_2020_2024.csv') 
     return df
 
 # --- INTERFAZ ---
