@@ -2,115 +2,64 @@ import streamlit as st
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
-import kagglehub
-import os
 
-# 1. CONFIGURACIÓN DE PÁGINA (Debe ser la primera instrucción de Streamlit)
-st.set_page_config(page_title="Energy & Climate Analysis", layout="wide")
-
-# Estilo de Seaborn para gráficos profesionales
+# 1. Configuración Profesional
+st.set_page_config(page_title="Análisis Energético - Miguel Sierra", layout="wide")
 sns.set_theme(style="whitegrid")
+plt.rcParams['figure.facecolor'] = '#f0f2f6'
 
-# 2. FUNCIÓN DE CARGA DE DATOS (Con caché para evitar esperas infinitas)
-@st.cache_data(show_spinner=False)
-def get_data():
-    try:
-        # Descarga desde Kaggle
-        path = kagglehub.dataset_download("emirhanakku/climate-and-energy-consumption-dataset-20202024")
-        
-        # Buscar el archivo CSV en la carpeta descargada
-        files = [f for f in os.listdir(path) if f.endswith('.csv')]
-        if not files:
-            return None
-        
-        full_path = os.path.join(path, files[0])
-        df = pd.read_csv(full_path)
-        
-        # Limpieza básica de fechas si existen
-        date_cols = [col for col in df.columns if 'date' in col.lower()]
-        if date_cols:
-            df[date_cols[0]] = pd.to_datetime(df[date_cols[0]])
-            
-        return df
-    except Exception as e:
-        st.error(f"Error al conectar con Kaggle: {e}")
-        return None
+# 2. Carga de Datos Local
+@st.cache_data
+def load_local_data():
+    # CAMBIA 'tu_archivo.csv' por el nombre real del archivo que subas a GitHub
+    df = pd.read_csv('climate_and_energy_data.csv') 
+    return df
 
-# --- LÓGICA DE NAVEGACIÓN ---
-st.sidebar.title("🛠️ Panel de Control")
-app_mode = st.sidebar.radio("Selecciona una sección:", ["Inicio", "Dashboard de Análisis"])
+# --- INTERFAZ ---
+st.sidebar.title("⚡ Navegación")
+menu = st.sidebar.radio("Ir a:", ["Inicio", "Dashboard Integrador"])
 
-# --- PÁGINA 1: LANDING PAGE ---
-if app_mode == "Inicio":
+if menu == "Inicio":
     st.title("🌍 Análisis de Energías Limpias y Clima")
-    
-    # Intentar cargar la imagen que subiste
     try:
         st.image("Energias limpias.jpg", use_container_width=True)
     except:
-        st.warning("⚠️ Imagen 'Energias limpias.jpg' no encontrada en el repositorio.")
+        st.info("🖼️ (Imagen principal del proyecto)")
 
     st.markdown("""
-    ---
-    ### 📊 Sobre el Proyecto
-    Este tablero interactivo ha sido diseñado para el curso de **Talento Tech (Nivel Integrador)**. 
-    El objetivo es analizar cómo las variaciones climáticas entre 2020 y 2024 han afectado el consumo global de energía.
+    ## Bienvenida
+    Este proyecto analiza la relación entre el clima y el consumo de energía (2020-2024).
     
-    **¿Qué encontrarás aquí?**
-    * **Tendencias Temporales:** Evolución del consumo año tras año.
-    * **Correlaciones:** Impacto de la temperatura en la demanda eléctrica.
-    * **Distribuciones:** Comportamiento de las variables energéticas.
-    
-    ---
-    **👤 Autor:** Miguel Sierra  
-    *Nivel: Integrador - Análisis de Datos*
+    **👨‍💻 Desarrollado por:** Miguel Sierra
+    **🎓 Institución:** Talento Tech - Nivel Integrador
     """)
-    
-    if st.button("🚀 Comenzar Análisis"):
-        st.info("Por favor, selecciona 'Dashboard de Análisis' en el menú de la izquierda.")
+    if st.button("Explorar Datos"):
+        st.balloons()
 
-# --- PÁGINA 2: PANEL DE TRABAJO ---
 else:
-    st.title("📊 Panel de Trabajo Integrador")
-    
-    with st.status("📥 Conectando con el dataset de Kaggle...", expanded=True) as status:
-        df = get_data()
-        if df is not None:
-            status.update(label="✅ ¡Datos cargados con éxito!", state="complete", expanded=False)
-        else:
-            status.update(label="❌ Error al cargar datos", state="error")
-
-    if df is not None:
-        # Pestañas para organizar los gráficos
-        tab1, tab2, tab3 = st.tabs(["📈 Tendencias", "🌡️ Correlaciones", "📊 Distribución"])
-
+    st.title("📊 Panel de Análisis de Datos")
+    try:
+        data = load_local_data()
+        
+        tab1, tab2 = st.tabs(["📈 Tendencias", "🌡️ Clima vs Energía"])
+        
         with tab1:
-            st.subheader("Evolución del Consumo Energético")
-            fig1, ax1 = plt.subplots(figsize=(10, 4))
-            # Usamos las primeras dos columnas como fallback si no conocemos los nombres exactos
-            sns.lineplot(data=df, x=df.columns[0], y=df.columns[1], ax=ax1, color='#2ecc71', linewidth=2)
-            plt.xticks(rotation=45)
-            st.pyplot(fig1)
-            st.info("**Explicación:** Este gráfico lineal permite visualizar la estacionalidad del consumo. Los picos suelen coincidir con meses de verano o invierno extremo.")
+            st.subheader("Consumo Energético Mensual")
+            fig, ax = plt.subplots(figsize=(10, 4))
+            # Ajustamos color a verde profesional
+            sns.lineplot(data=data, x=data.columns[0], y=data.columns[1], color="#27ae60", ax=ax)
+            st.pyplot(fig)
+            st.write("**Análisis:** Se observa el comportamiento histórico de la demanda.")
 
         with tab2:
-            st.subheader("Impacto Climático en la Energía")
+            st.subheader("Relación Temperatura y Demanda")
             fig2, ax2 = plt.subplots(figsize=(10, 4))
-            sns.scatterplot(data=df, x=df.columns[2], y=df.columns[1], hue=df.columns[1], palette="magma", ax=ax2)
+            sns.scatterplot(data=data, x=data.columns[2], y=data.columns[1], color="#2980b9", ax=ax2)
             st.pyplot(fig2)
-            st.info("**Explicación:** El diagrama de dispersión muestra la relación entre temperatura y demanda. Una tendencia clara indicaría una dependencia directa del clima.")
+            st.write("**Análisis:** Correlación entre variables climáticas y carga eléctrica.")
 
-        with tab3:
-            st.subheader("Histograma de Consumo")
-            fig3, ax3 = plt.subplots(figsize=(10, 4))
-            sns.histplot(df[df.columns[1]], kde=True, color="#3498db", ax=ax3)
-            st.pyplot(fig3)
-            st.info("**Explicación:** Aquí observamos la concentración de los datos. La curva KDE nos ayuda a entender si el consumo energético es constante o varía drásticamente.")
-            
-        # Mostrar tabla de datos opcional
-        with st.expander("👀 Ver datos crudos"):
-            st.dataframe(df.head(10))
+    except Exception as e:
+        st.error(f"Falta subir el archivo CSV a GitHub. Error: {e}")
 
-# Pie de página lateral
 st.sidebar.markdown("---")
-st.sidebar.caption("Proyecto Talento Tech | 2024")
+st.sidebar.write("Realizado por Miguel Sierra")
